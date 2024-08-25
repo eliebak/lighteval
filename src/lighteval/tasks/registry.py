@@ -270,17 +270,15 @@ def create_config_tasks(
 
     if meta_table is None:
         meta_table = [config for config in vars(default_tasks).values() if isinstance(config, LightevalTaskConfig)]
-
+    print(meta_table)
     tasks_with_config = {}
     # Every task is renamed suite|task, if the suite is in DEFAULT_SUITE
     for config in meta_table:
-        if not any(suite in config.suite for suite in DEFAULT_SUITES):
-            hlog_warn(
-                f"This evaluation is not in any known suite: {config.name} is in {config.suite}, not in {DEFAULT_SUITES}. Skipping."
-            )
-            continue
-        for suite in config.suite:
-            if suite in DEFAULT_SUITES:
-                tasks_with_config[f"{suite}|{config.name}"] = config
+        try:
+            for suite in config.suite:
+                if suite in DEFAULT_SUITES:
+                        tasks_with_config[f"{suite}|{config.name}"] = config
+        except:
+            print(f"Error processing task {config.name}")
 
     return {task: create_task(task, cfg, cache_dir=cache_dir) for task, cfg in tasks_with_config.items()}

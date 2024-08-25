@@ -103,12 +103,12 @@ class Pipeline:
         tasks: str,
         pipeline_parameters: PipelineParameters,
         evaluation_tracker: EvaluationTracker,
-        model=None,
         model_config=None,
+        model=None,
     ):
         if not (model or model_config):
             raise ValueError("Must provide either a model or model config when creating a pipeline.")
-
+        
         self.pipeline_parameters = pipeline_parameters
         self.launcher_type = self.pipeline_parameters.launcher_type
         if self.pipeline_parameters.max_samples:
@@ -116,11 +116,12 @@ class Pipeline:
                 "WARNING: --max_samples WAS SET. THESE NUMBERS ARE ONLY PARTIAL AND SHOULD NOT BE USED FOR COMPARISON UNLESS YOU KNOW WHAT YOU ARE DOING."
             )
 
-        self.accelerator, self.parallel_context = self._init_parallelism_manager()
-
-        self.evaluation_tracker = evaluation_tracker
         self.model_config = model_config
+        self.evaluation_tracker = evaluation_tracker
+        self.accelerator, self.parallel_context = self._init_parallelism_manager()
         self.model = self._init_model(model_config, model)
+        
+
 
         self.evaluation_tracker.general_config_logger.log_model_info(self.model.model_info)
         self._init_tasks_and_requests(tasks=tasks)
@@ -141,9 +142,9 @@ class Pipeline:
                     raise ValueError("You are trying to launch a nanotron model, but nanotron is not installed")
                 dist.initialize_torch_distributed()
                 parallel_context = ParallelContext(
-                    tensor_parallel_size=self.model_config.parallelism.tp,
-                    pipeline_parallel_size=self.model_config.parallelism.pp,
-                    data_parallel_size=self.model_config.parallelism.dp,
+                    tensor_parallel_size=self.model_config.lighteval.parallelism.tp,
+                    pipeline_parallel_size=self.model_config.lighteval.parallelism.pp,
+                    data_parallel_size=self.model_config.lighteval.parallelism.dp,
                 )
                 test_all_gather(parallel_context=parallel_context)
 
@@ -156,7 +157,7 @@ class Pipeline:
                     return NanotronLightevalModel(
                         checkpoint_path=os.path.dirname(self.pipeline_parameters.nanotron_checkpoint_path),
                         nanotron_config=self.model_config,
-                        parallel_context=self.accelerator,
+                        parallel_context=self.parallel_context,
                         debug_one_layer_model=False,
                         model_class=None,
                         env_config=self.pipeline_parameters.env_config,

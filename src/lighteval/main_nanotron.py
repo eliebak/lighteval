@@ -66,6 +66,7 @@ def main(
         else:
             lighteval_config = model_config.lighteval
 
+
     evaluation_tracker = EvaluationTracker(
         token=os.getenv("HF_TOKEN"),
         output_dir=lighteval_config.logging.local_output_path,
@@ -94,6 +95,7 @@ def main(
         evaluation_tracker=evaluation_tracker,
         model_config=model_config,
     )
+    print(pipeline.model_config)
 
     pipeline.evaluate()
 
